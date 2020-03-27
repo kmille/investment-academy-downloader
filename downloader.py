@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from subprocess import Popen, PIPE
+import sys
 from typing import Tuple, List
 import os
 import re
@@ -7,6 +7,7 @@ from shlex import quote
 
 from bs4 import BeautifulSoup
 
+from util import execute
 
 from pycookiecheat import chrome_cookies
 import requests
@@ -17,19 +18,11 @@ OUTPUT_DIR_BASE = "/home/kmille/projects/investment-academy-crawler/videos"
 
 
 cookies = chrome_cookies(URL_ACADEMY_BASE, browser='chromium')
+assert cookies is not {}
 
 session = requests.Session()
 session.headers.update({"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0"})
 session.cookies.update(cookies)
-
-
-def execute(cmd: str, scharf: bool = False) -> None:
-    print(f"{cmd}")
-    if scharf:
-        p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-        p.wait()
-        if p.returncode != 0:
-            print(p.communicate())
 
 
 def get_category_id_of_episode_url(url: str) -> str:
@@ -94,7 +87,13 @@ def download_all_episodes_of_category(category_id: str):
         download_link = get_episode_download_url(url)
         download_episode(category_name, episode_name, download_link)
 
+    
+assert "1768076" == get_category_id_of_episode_url("https://investmentpunk-academy.mykajabi.com/products/investment-punk-academy/categories/1768076/posts/6495672")
 
 if __name__ == '__main__':
-    assert "1768076" == get_category_id_of_episode_url("https://investmentpunk-academy.mykajabi.com/products/investment-punk-academy/categories/1768076/posts/6495672")
-    download_all_episodes_of_category("1767837")
+    if len(sys.argv) == 1:
+        print(f"{sys.argv[0]} <url of a video>")
+        sys.exit(1)
+    category_id = get_category_id_of_episode_url(sys.argv[1])
+    #download_all_episodes_of_category("1767837")
+    download_all_episodes_of_category(category_id)
