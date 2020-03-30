@@ -39,7 +39,7 @@ def download_episode(category_name: str, episode_name: str, download_link: str):
     output_dir_abs = os.path.join(OUTPUT_DIR_BASE, category_name)
     if not os.path.exists(output_dir_abs):
         os.makedirs(output_dir_abs)
-    file_name = episode_name.replace(":", "- ").replace("?", "") + ".mp4"
+    file_name = episode_name.replace(":", " -").replace("?", "") + ".mp4"
     output_file_abs = os.path.join(output_dir_abs, file_name)
     if os.path.exists(output_file_abs):
         print(f"Skipping {output_file_abs} - already there")
