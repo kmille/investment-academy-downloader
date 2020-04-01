@@ -7,19 +7,14 @@ import sys
 convert_cmd = "ffmpeg -y -loglevel warning -i {} -b:a 320k {}"
 dir_mp3 = "mp3"
 
-if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        print(f"{sys.argv[0]} <dir of mp4 files to convert>")
-        sys.exit(1)
-    dir_in = sys.argv[1]
 
+def mp3_to_mp4(dir_in):
     if not os.path.exists(dir_in):
         print(f"Dir '{dir_in}' does not exist")
-        sys.exit(1)
-
+        return
     dir_out = os.path.join(dir_in, dir_mp3)
-    if not os.path.exists(dir_out):
-        os.makedirs(dir_out)
+
+    os.makedirs(dir_out, exist_ok=True)
 
     for mp4 in os.listdir(dir_in):
         print(f"Converting '{mp4}' to mp3")
@@ -32,3 +27,10 @@ if __name__ == '__main__':
         cmd = convert_cmd.format(quote(file_in), quote(file_out))
         execute(cmd, scharf=True)
 
+
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        print(f"{sys.argv[0]} <dir of mp4 files to convert>")
+        sys.exit(1)
+    dir_in = sys.argv[1]
+    mp3_to_mp4(dir_in)
