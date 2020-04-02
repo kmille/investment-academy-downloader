@@ -52,7 +52,7 @@ def get_category_id_of_episode_url(url: str) -> str:
         raise Exception("Could not find category_id")
 
 
-def download_episode(args):
+def download_episode(args: Tuple[str, str, str]) -> str:
     category_name, episode_name, download_link = args
     print(f"Downloading {episode_name}")
     output_dir_abs = os.path.join(OUTPUT_DIR_BASE, category_name)
@@ -86,7 +86,7 @@ def get_episodes_for_category(category_id: str) -> Tuple[str, List[Tuple[str, st
     return category_name, episodes
 
 
-def get_episode_download_url(url_path: str):
+def get_episode_download_url(url_path: str) -> str:
     resp = session.get(f"{URL_ACADEMY_BASE}{url_path}")
     assert resp.status_code == 200
     regex = re.search(r'_wq.push\({"([a-z0-9]+)"', resp.text)
@@ -126,8 +126,8 @@ if __name__ == '__main__':
     if args.video_url:
         category_id = get_category_id_of_episode_url(args.video_url)
         download_all_episodes_for_category(category_id)
+
     if args.category_url:
         category_ids = get_all_category_ids_for_ueberkategorie(args.category_url)
         for category_id in category_id:
             download_all_episodes_for_category(category_id)
-

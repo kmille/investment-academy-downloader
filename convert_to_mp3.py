@@ -8,7 +8,7 @@ convert_cmd = "ffmpeg -y -loglevel warning -i {} -b:a 320k {}"
 dir_mp3 = "mp3"
 
 
-def mp3_to_mp4(dir_in):
+def mp3_to_mp4(dir_in: str) -> None:
     if not os.path.exists(dir_in):
         print(f"Dir '{dir_in}' does not exist")
         return
