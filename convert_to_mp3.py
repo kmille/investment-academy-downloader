@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from util import execute
 from shlex import quote
+from multiprocessing import Process
 import os
 import sys
 
@@ -16,6 +17,7 @@ def mp3_to_mp4(dir_in: str) -> None:
 
     os.makedirs(dir_out, exist_ok=True)
 
+    process_list = []
     for mp4 in os.listdir(dir_in):
         print(f"Converting '{mp4}' to mp3")
         file_in = os.path.join(dir_in, mp4)
@@ -25,7 +27,12 @@ def mp3_to_mp4(dir_in: str) -> None:
             print(f"File '{file_out}' already exists")
             continue
         cmd = convert_cmd.format(quote(file_in), quote(file_out))
-        execute(cmd, scharf=True)
+        p = Process(target=execute, args=(cmd, True))
+        p.start()
+        process_list.append(p)
+    print("Started all processes")
+    for p in process_list:
+        p.join()
 
 
 if __name__ == '__main__':

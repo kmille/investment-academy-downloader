@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import sys
-import argparse
-from typing import Tuple, List, Set
-from multiprocessing import Pool
 import os
 import re
+import argparse
+import requests
+from typing import Tuple, List, Set, Optional
+from multiprocessing import Pool
 from shlex import quote
 
 from bs4 import BeautifulSoup
@@ -14,13 +15,12 @@ from util import execute
 
 from convert_to_mp3 import mp3_to_mp4
 from pycookiecheat import chrome_cookies
-import requests
 
 
 URL_ACADEMY_BASE = "https://investmentpunk-academy.mykajabi.com"
-OUTPUT_DIR_BASE = "/home/kmille/projects/investment-academy-crawler/videos"
 POOL_SIZE = 10
 
+OUTPUT_DIR_BASE = "/home/kmille/..."
 
 cookies = chrome_cookies(URL_ACADEMY_BASE, browser='chromium')
 assert cookies is not {}
@@ -49,10 +49,10 @@ def get_category_id_of_episode_url(url: str) -> str:
     if regex:
         return regex.group(1)
     else:
-        raise Exception("Could not find category_id")
+        raise Exception(f"Could not find category_id {url}")
 
 
-def download_episode(args: Tuple[str, str, str]) -> str:
+def download_episode(args: Tuple[str, str, str]) -> Optional[str]:
     category_name, episode_name, download_link = args
     print(f"Downloading {episode_name}")
     output_dir_abs = os.path.join(OUTPUT_DIR_BASE, category_name)
@@ -86,18 +86,23 @@ def get_episodes_for_category(category_id: str) -> Tuple[str, List[Tuple[str, st
     return category_name, episodes
 
 
-def get_episode_download_url(url_path: str) -> str:
+def get_episode_download_url(url_path: str) -> Optional[str]:
     resp = session.get(f"{URL_ACADEMY_BASE}{url_path}")
     assert resp.status_code == 200
     regex = re.search(r'_wq.push\({"([a-z0-9]+)"', resp.text)
     if regex:
         chapter_id = regex.group(1)
     else:
-        raise Exception("Regex failed")
+        print(f"ERROR with the regex in get_episode_download_url chapter_id '{resp.text}'")
+        return None
     resp = session.get(f"https://fast.wistia.com/embed/medias/{chapter_id}.json?callback=wistiajson1")
     assert resp.status_code == 200
-    still_shit = re.search(r'height":720(.+?)\.bin', resp.text.replace("\n", "")).group()
-    download_url = re.search(r'https://embed-ssl.wistia.com/deliveries/[a-f0-9]+', still_shit).group()
+    try:
+        still_shit = re.search(r'height":720(.+?)\.bin', resp.text.replace("\n", "")).group()
+        download_url = re.search(r'https://embed-ssl.wistia.com/deliveries/[a-f0-9]+', still_shit).group()
+    except AttributeError:
+        print(f"ERROR with the regex in get_episode_download_url still_shit '{url_path}'")
+        return None
     return download_url
 
 
@@ -106,10 +111,10 @@ def download_all_episodes_for_category(category_id: str):
     tasks = []
     for episode_name, url in episodes_data:
         download_link = get_episode_download_url(url)
-        tasks.append((category_name, episode_name, download_link))
+        if download_link:
+            tasks.append((category_name, episode_name, download_link))
     p = Pool(POOL_SIZE)
     output_dirs = p.map(download_episode, tasks)
-    print("Download finished")
     for output_dir in output_dirs:
         if output_dir:
             mp3_to_mp4(output_dir)
@@ -129,5 +134,5 @@ if __name__ == '__main__':
 
     if args.category_url:
         category_ids = get_all_category_ids_for_ueberkategorie(args.category_url)
-        for category_id in category_id:
+        for category_id in category_ids:
             download_all_episodes_for_category(category_id)
